@@ -1,0 +1,23 @@
+# Build
+build/
+
+# JUCE (clone separately)
+JUCE/
+
+# IDE / editor
+.vscode/
+.idea/
+*.xcodeproj/
+*.xcworkspace/
+
+# macOS
+.DS_Store
+
+# Proprietary schematics
+*.PDF
+
+# Compiled
+*.o
+*.a
+*.dylib
+*.so

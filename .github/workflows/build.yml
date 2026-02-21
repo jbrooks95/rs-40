@@ -1,0 +1,146 @@
+name: Build & Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-macos:
+    name: macOS Build (VST3 + AU)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
+        with:
+          path: JUCE
+          key: juce-8.0.12-macos
+
+      - name: Clone JUCE
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch 8.0.12 \
+            https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configure
+        run: |
+          SDK=$(xcrun --sdk macosx --show-sdk-path)
+          CPLUS_INCLUDE_PATH="${SDK}/usr/include/c++/v1" \
+            cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: |
+          SDK=$(xcrun --sdk macosx --show-sdk-path)
+          CPLUS_INCLUDE_PATH="${SDK}/usr/include/c++/v1" \
+            cmake --build build --config Release
+
+      - name: Verify artifacts
+        run: |
+          ls -la "build/RS40_artefacts/Release/VST3/RS-40.vst3"
+          ls -la "build/RS40_artefacts/Release/AU/RS-40.component"
+
+      - name: Package
+        run: |
+          mkdir -p staging
+          ditto "build/RS40_artefacts/Release/VST3/RS-40.vst3"      "staging/RS-40.vst3"
+          ditto "build/RS40_artefacts/Release/AU/RS-40.component"    "staging/RS-40.component"
+
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION="dev-${GITHUB_SHA::7}"
+          fi
+
+          ditto -c -k --keepParent staging "RS-40-${VERSION}-macOS.zip"
+          echo "ARTIFACT_NAME=RS-40-${VERSION}-macOS.zip" >> "$GITHUB_ENV"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.ARTIFACT_NAME }}
+          retention-days: 30
+
+  build-windows:
+    name: Windows Build (VST3)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Cache JUCE
+        id: cache-juce
+        uses: actions/cache@v4
+        with:
+          path: JUCE
+          key: juce-8.0.12-windows
+
+      - name: Clone JUCE
+        if: steps.cache-juce.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch 8.0.12 `
+            https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release
+
+      - name: Verify artifacts
+        run: |
+          Get-ChildItem -Recurse "build/RS40_artefacts/Release/VST3/RS-40.vst3"
+
+      - name: Package
+        run: |
+          New-Item -ItemType Directory -Force -Path staging
+          Copy-Item -Recurse "build/RS40_artefacts/Release/VST3/RS-40.vst3" "staging/RS-40.vst3"
+
+          if ($env:GITHUB_REF -match '^refs/tags/v') {
+            $version = $env:GITHUB_REF -replace '^refs/tags/', ''
+          } else {
+            $version = "dev-$($env:GITHUB_SHA.Substring(0,7))"
+          }
+
+          Compress-Archive -Path "staging/*" -DestinationPath "RS-40-${version}-Windows.zip"
+          echo "ARTIFACT_NAME=RS-40-${version}-Windows.zip" >> $env:GITHUB_ENV
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.ARTIFACT_NAME }}
+          retention-days: 30
+
+  release:
+    name: Create Release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build-macos, build-windows]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          gh release create "$TAG" \
+            artifacts/*.zip \
+            --title "RS-40 $TAG" \
+            --generate-notes
