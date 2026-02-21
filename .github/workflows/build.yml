@@ -49,9 +49,27 @@ jobs:
 
       - name: Package
         run: |
-          mkdir -p staging
-          ditto "build/RS40_artefacts/Release/VST3/RS-40.vst3"      "staging/RS-40.vst3"
-          ditto "build/RS40_artefacts/Release/AU/RS-40.component"    "staging/RS-40.component"
+          mkdir -p RS-40
+          ditto "build/RS40_artefacts/Release/VST3/RS-40.vst3"      "RS-40/RS-40.vst3"
+          ditto "build/RS40_artefacts/Release/AU/RS-40.component"    "RS-40/RS-40.component"
+
+          cat > RS-40/INSTALL.txt << 'EOF'
+          RS-40 — Installation (macOS)
+          ============================
+
+          VST3:
+            Copy RS-40.vst3 to ~/Library/Audio/Plug-Ins/VST3/
+
+          AU (Audio Unit):
+            Copy RS-40.component to ~/Library/Audio/Plug-Ins/Components/
+
+          If macOS blocks the plugin ("unidentified developer"), run:
+            xattr -cr "RS-40.vst3"
+            xattr -cr "RS-40.component"
+
+          Then rescan plugins in your DAW.
+          EOF
+          sed -i '' 's/^          //' RS-40/INSTALL.txt
 
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             VERSION="${GITHUB_REF#refs/tags/}"
@@ -59,7 +77,7 @@ jobs:
             VERSION="dev-${GITHUB_SHA::7}"
           fi
 
-          ditto -c -k --keepParent staging "RS-40-${VERSION}-macOS.zip"
+          ditto -c -k --keepParent RS-40 "RS-40-${VERSION}-macOS.zip"
           echo "ARTIFACT_NAME=RS-40-${VERSION}-macOS.zip" >> "$GITHUB_ENV"
 
       - name: Upload build artifact
@@ -102,8 +120,19 @@ jobs:
 
       - name: Package
         run: |
-          New-Item -ItemType Directory -Force -Path staging
-          Copy-Item -Recurse "build/RS40_artefacts/Release/VST3/RS-40.vst3" "staging/RS-40.vst3"
+          New-Item -ItemType Directory -Force -Path RS-40
+          Copy-Item -Recurse "build/RS40_artefacts/Release/VST3/RS-40.vst3" "RS-40/RS-40.vst3"
+
+          @"
+          RS-40 — Installation (Windows)
+          ===============================
+
+          VST3:
+            Copy the RS-40.vst3 folder to:
+            C:\Program Files\Common Files\VST3\
+
+          Then rescan plugins in your DAW.
+          "@ | ForEach-Object { $_ -replace '^\s{10}', '' } | Set-Content "RS-40/INSTALL.txt"
 
           if ($env:GITHUB_REF -match '^refs/tags/v') {
             $version = $env:GITHUB_REF -replace '^refs/tags/', ''
@@ -111,7 +140,7 @@ jobs:
             $version = "dev-$($env:GITHUB_SHA.Substring(0,7))"
           }
 
-          Compress-Archive -Path "staging/*" -DestinationPath "RS-40-${version}-Windows.zip"
+          Compress-Archive -Path "RS-40" -DestinationPath "RS-40-${version}-Windows.zip"
           echo "ARTIFACT_NAME=RS-40-${version}-Windows.zip" >> $env:GITHUB_ENV
 
       - name: Upload build artifact
