@@ -2,6 +2,8 @@
 
 A preamp emulation plugin inspired by the Ashly SC-40.
 
+**Download & Info:** [random-samples.com](https://random-samples.com)
+
 ## Features
 
 - **Input Stage** — Variable gain (0–40dB) with built-in subsonic filter at ~34Hz
