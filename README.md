@@ -21,7 +21,7 @@ Formats: **VST3** (macOS, Windows) | **AU** (macOS)
 ```
 RS-40/
 ├── CMakeLists.txt              # Build configuration
-├── LICENSE                     # GPL-3.0
+├── LICENSE                     # AGPL-3.0
 ├── README.md                   # This file
 ├── MANUAL.md                   # User manual
 ├── Resources/
