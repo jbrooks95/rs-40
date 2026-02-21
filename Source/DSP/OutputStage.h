@@ -1,5 +1,6 @@
 #pragma once
 
+#define _USE_MATH_DEFINES
 #include "BiquadFilter.h"
 #include "RC4558Model.h"
 #include <cmath>
