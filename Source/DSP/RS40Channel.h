@@ -19,12 +19,7 @@ public:
         diodeClipper.prepare(sampleRate);
         eqSection.prepare(sampleRate);
         outputStage.prepare(sampleRate);
-
-        
-        oversampler.prepare(sampleRate, 2); 
-
-        
-        
+        oversampler.prepare(sampleRate, 2);
         double peakTau = 0.022;
         peakReleaseCoeff = std::exp(-1.0 / (peakTau * sampleRate));
     }
@@ -38,22 +33,11 @@ public:
         oversampler.reset();
         peakEnvelope = 0.0;
     }
-
-    
-    
-    
-    
-
-    
     void setInputLevel(bool hiLevel) { inputStage.setHiLevel(hiLevel); }
     void setGain(double param) { inputStage.setGain(param); }
-
-    
     void setDistortionEnabled(bool enabled) { diodeClipper.setEnabled(enabled); }
     void setDistortionBlend(double blend) { diodeClipper.setBlend(blend); }
     void setDistortionDrive(double drive) { diodeClipper.setDrive(drive); }
-
-    
     void setLoGain(double db) { eqSection.setLoGain(db); }
     void setLoTune(double param) { eqSection.setLoTune(param); }
     void setMidGain(double db) { eqSection.setMidGain(db); }
@@ -61,15 +45,9 @@ public:
     void setMidQ(double q) { eqSection.setMidQ(q); }
     void setHiGain(double db) { eqSection.setHiGain(db); }
     void setHiTune(double param) { eqSection.setHiTune(param); }
-
-    
     void setOutputMode(OutputStage::OutputMode mode) { outputStage.setOutputMode(mode); }
     void setOutputLevel(double level) { outputStage.setOutputLevel(level); }
-
-    
     void setPreEQ(bool pre) { preEQ = pre; }
-
-    
     void setAnalogCharacter(double amount)
     {
         inputStage.setSaturation(amount);
@@ -77,27 +55,16 @@ public:
         outputStage.setSaturation(amount);
     }
 
-    
-    
-    
-
-    
     double processSample(double input)
     {
-        
         double signal = inputStage.process(input);
-
-        
         double peakBuss = std::abs(signal);
-
-        
         if (diodeClipper.isActive())
         {
             double preClip = signal;
             signal = oversampler.process(signal, [this](double s) {
                 return diodeClipper.process(s);
             });
-            
             double absPre = std::abs(preClip);
             if (absPre > 0.001)
             {
@@ -106,40 +73,22 @@ public:
                     currentClipAmount = reduction;
             }
         }
-
-        
         peakBuss = std::max(peakBuss, std::abs(signal));
-
-        
         double preEqSignal = signal;
-
-        
         signal = eqSection.process(signal);
-
-        
         peakBuss = std::max(peakBuss, std::abs(preEQ ? preEqSignal : signal));
-
-        
-        
         if (peakBuss > peakEnvelope)
-            peakEnvelope = peakBuss;              
+            peakEnvelope = peakBuss;
         else
-            peakEnvelope *= peakReleaseCoeff;      
-
-        
+            peakEnvelope *= peakReleaseCoeff;
         if (peakEnvelope > currentPeakLevel)
             currentPeakLevel = peakEnvelope;
-
-        
         double outputSignal = preEQ ? preEqSignal : signal;
-
-        
         outputSignal = outputStage.process(outputSignal);
 
         return outputSignal;
     }
 
-    
     void processBlock(float* buffer, int numSamples)
     {
         currentPeakLevel = 0.0;
@@ -151,7 +100,6 @@ public:
         }
     }
 
-    
     double getPeakLevel() const { return currentPeakLevel; }
     void resetPeakLevel() { currentPeakLevel = 0.0; }
 
@@ -161,17 +109,13 @@ public:
 private:
     double sr = 44100.0;
     bool preEQ = false;
-
-    
     InputStage inputStage;
     DiodeClipper diodeClipper;
     EQSection eqSection;
     OutputStage outputStage;
     Oversampler oversampler;
-
-    
-    double peakEnvelope = 0.0;         
-    double peakReleaseCoeff = 0.999;   
-    double currentPeakLevel = 0.0;     
+    double peakEnvelope = 0.0;
+    double peakReleaseCoeff = 0.999;
+    double currentPeakLevel = 0.0;
     double currentClipAmount = 0.0;
 };

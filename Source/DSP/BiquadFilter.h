@@ -14,9 +14,6 @@ public:
         z1 = 0.0;
         z2 = 0.0;
     }
-
-    
-    
     double process(double input)
     {
         double output = b0 * input + z1;
@@ -25,13 +22,6 @@ public:
         return output;
     }
 
-    
-    
-    
-    
-    
-
-    
     void setLowShelf(double sampleRate, double freqHz, double gainDb, double Q = 0.707)
     {
         double A = std::pow(10.0, gainDb / 40.0);
@@ -49,7 +39,6 @@ public:
         a2 = ((A + 1.0) + (A - 1.0) * cosw0 - 2.0 * sqrtA * alpha) / a0;
     }
 
-    
     void setHighShelf(double sampleRate, double freqHz, double gainDb, double Q = 0.707)
     {
         double A = std::pow(10.0, gainDb / 40.0);
@@ -67,12 +56,10 @@ public:
         a2 = ((A + 1.0) - (A - 1.0) * cosw0 - 2.0 * sqrtA * alpha) / a0;
     }
 
-    
     void setPeaking(double sampleRate, double freqHz, double gainDb, double Q = 1.0)
     {
         if (std::abs(gainDb) < 0.01)
         {
-            
             b0 = 1.0; b1 = 0.0; b2 = 0.0;
             a1 = 0.0; a2 = 0.0;
             return;
@@ -92,7 +79,6 @@ public:
         a2 = (1.0 - alpha / A) / a0;
     }
 
-    
     void setHighPass(double sampleRate, double freqHz, double Q = 0.707)
     {
         double w0 = 2.0 * M_PI * freqHz / sampleRate;
@@ -108,7 +94,6 @@ public:
         a2 = (1.0 - alpha) / a0;
     }
 
-    
     void setLowPass(double sampleRate, double freqHz, double Q = 0.707)
     {
         double w0 = 2.0 * M_PI * freqHz / sampleRate;
@@ -125,11 +110,8 @@ public:
     }
 
 private:
-    
     double b0 = 1.0, b1 = 0.0, b2 = 0.0;
     double a1 = 0.0, a2 = 0.0;
-
-    
     double z1 = 0.0;
     double z2 = 0.0;
 };

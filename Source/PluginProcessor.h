@@ -14,7 +14,6 @@ public:
           parameters(*this, nullptr, juce::Identifier("RS40"),
               createParameterLayout())
     {
-        
         gainParam = parameters.getRawParameterValue("gain");
         loGainParam = parameters.getRawParameterValue("loGain");
         loTuneParam = parameters.getRawParameterValue("loTune");
@@ -31,13 +30,8 @@ public:
 
     ~RS40AudioProcessor() override = default;
 
-    
-    
-    
-
     void prepareToPlay(double sampleRate, int samplesPerBlock) override
     {
-        
         for (auto& ch : channels)
             ch.prepare(sampleRate);
     }
@@ -56,23 +50,15 @@ public:
         auto totalNumInputChannels = getTotalNumInputChannels();
         auto totalNumOutputChannels = getTotalNumOutputChannels();
         int numSamples = buffer.getNumSamples();
-
-        
         for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
             buffer.clear(i, 0, numSamples);
-
-        
         updateParameters();
-
-        
         int numChannelsToProcess = std::min((int)totalNumInputChannels, 2);
         for (int ch = 0; ch < numChannelsToProcess; ++ch)
         {
             float* channelData = buffer.getWritePointer(ch);
             channels[ch].processBlock(channelData, numSamples);
         }
-
-        
         for (int ch = 0; ch < numChannelsToProcess; ++ch)
         {
             double peak = channels[ch].getPeakLevel();
@@ -85,10 +71,6 @@ public:
                 clipAmount.store(clip);
             channels[ch].resetClipAmount();
         }
-
-        
-        
-        
         if (numChannelsToProcess > 0)
         {
             const float* ch0 = buffer.getReadPointer(0);
@@ -107,10 +89,6 @@ public:
         }
     }
 
-    
-    
-    
-
     const juce::String getName() const override { return "RS-40"; }
     bool acceptsMidi() const override { return false; }
     bool producesMidi() const override { return false; }
@@ -122,10 +100,6 @@ public:
     void setCurrentProgram(int) override {}
     const juce::String getProgramName(int) override { return {}; }
     void changeProgramName(int, const juce::String&) override {}
-
-    
-    
-    
 
     void getStateInformation(juce::MemoryBlock& destData) override
     {
@@ -142,16 +116,8 @@ public:
                 parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
     }
 
-    
-    
-    
-
     bool hasEditor() const override { return true; }
     juce::AudioProcessorEditor* createEditor() override;
-
-    
-    
-    
 
     juce::AudioProcessorValueTreeState& getAPVTS() { return parameters; }
 
@@ -165,20 +131,13 @@ public:
     int getScopeWriteIndex() const { return scopeWriteIndex.load(); }
 
 private:
-    
-    
-    
 
     static juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout()
     {
         std::vector<std::unique_ptr<juce::RangedAudioParameter>> params;
-
-        
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"gain", 1}, "Gain",
             juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.5f));
-
-        
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"loGain", 1}, "Lo Gain",
             juce::NormalisableRange<float>(-15.0f, 15.0f, 0.1f), 0.0f));
@@ -186,8 +145,6 @@ private:
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"loTune", 1}, "Lo Tune",
             juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.5f));
-
-        
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"midGain", 1}, "Mid Gain",
             juce::NormalisableRange<float>(-15.0f, 15.0f, 0.1f), 0.0f));
@@ -195,8 +152,6 @@ private:
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"midTune", 1}, "Mid Tune",
             juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.5f));
-
-        
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"hiGain", 1}, "Hi Gain",
             juce::NormalisableRange<float>(-15.0f, 15.0f, 0.1f), 0.0f));
@@ -204,8 +159,6 @@ private:
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"hiTune", 1}, "Hi Tune",
             juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.5f));
-
-        
         params.push_back(std::make_unique<juce::AudioParameterBool>(
             juce::ParameterID{"distEnabled", 1}, "Distortion",
             false));
@@ -217,23 +170,15 @@ private:
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"distDrive", 1}, "Dist Drive",
             juce::NormalisableRange<float>(0.1f, 10.0f, 0.01f, 0.5f), 1.0f));
-
-        
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"outputLevel", 1}, "Output",
             juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f), 0.75f));
-
-        
         params.push_back(std::make_unique<juce::AudioParameterFloat>(
             juce::ParameterID{"analogCharacter", 1}, "Analog",
             juce::NormalisableRange<float>(0.0f, 1.0f, 0.001f), 1.0f));
 
         return { params.begin(), params.end() };
     }
-
-    
-    
-    
 
     void updateParameters()
     {
@@ -257,28 +202,14 @@ private:
         }
     }
 
-    
-    
-    
-
     juce::AudioProcessorValueTreeState parameters;
-
-    
     RS40Channel channels[2];
-
-    
     std::atomic<double> peakLevel { 0.0 };
-
-    
     std::atomic<double> clipAmount { 0.0 };
-
-    
     std::array<float, 512> scopeBuffer {};
     std::atomic<int> scopeWriteIndex { 0 };
     int scopeDecimCounter = 0;
     static constexpr int scopeDecimFactor = 8;
-
-    
     std::atomic<float>* gainParam = nullptr;
     std::atomic<float>* loGainParam = nullptr;
     std::atomic<float>* loTuneParam = nullptr;
