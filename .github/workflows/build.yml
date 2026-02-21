@@ -57,17 +57,42 @@ jobs:
           RS-40 — Installation (macOS)
           ============================
 
-          VST3:
-            Copy RS-40.vst3 to ~/Library/Audio/Plug-Ins/VST3/
+          STEP 1: REMOVE QUARANTINE FLAG
 
-          AU (Audio Unit):
-            Copy RS-40.component to ~/Library/Audio/Plug-Ins/Components/
+            macOS blocks unsigned plugins by default. Before installing,
+            open Terminal and run these commands on the downloaded files:
 
-          If macOS blocks the plugin ("unidentified developer"), run:
-            xattr -cr "RS-40.vst3"
-            xattr -cr "RS-40.component"
+              xattr -cr "RS-40.vst3"
+              xattr -cr "RS-40.component"
 
-          Then rescan plugins in your DAW.
+            (Right-click the Terminal app in Applications > Utilities to open it.
+            You can drag and drop the files into the Terminal window instead of
+            typing the paths manually.)
+
+          STEP 2: INSTALL THE PLUGIN
+
+            VST3:
+              Copy RS-40.vst3 to:
+              ~/Library/Audio/Plug-Ins/VST3/
+
+              To open this folder in Finder, press Cmd+Shift+G and paste
+              the path above.
+
+            AU (Audio Unit):
+              Copy RS-40.component to:
+              ~/Library/Audio/Plug-Ins/Components/
+
+          STEP 3: RESCAN IN YOUR DAW
+
+            Open your DAW and rescan or refresh your plugin list.
+            Look for "RS-40" by Random Samples.
+
+          TROUBLESHOOTING
+
+            If your DAW still doesn't see the plugin, try:
+            - Restarting your DAW
+            - Running the xattr commands again on the installed copies
+            - Checking that the files are in the correct folders
           EOF
           sed -i '' 's/^          //' RS-40/INSTALL.txt
 
@@ -127,11 +152,27 @@ jobs:
           RS-40 — Installation (Windows)
           ===============================
 
-          VST3:
-            Copy the RS-40.vst3 folder to:
+          STEP 1: INSTALL THE PLUGIN
+
+            Copy the entire RS-40.vst3 folder to:
             C:\Program Files\Common Files\VST3\
 
-          Then rescan plugins in your DAW.
+            (You may need administrator permissions. Right-click the folder
+            and choose "Copy", then navigate to the VST3 directory above,
+            right-click, and choose "Paste".)
+
+          STEP 2: RESCAN IN YOUR DAW
+
+            Open your DAW and rescan or refresh your plugin list.
+            Look for "RS-40" by Random Samples.
+
+          TROUBLESHOOTING
+
+            If your DAW doesn't see the plugin, try:
+            - Restarting your DAW
+            - Confirming the RS-40.vst3 folder (not just its contents)
+              is inside the VST3 directory
+            - Checking your DAW's plugin scan paths include the folder above
           "@ | ForEach-Object { $_ -replace '^\s{10}', '' } | Set-Content "RS-40/INSTALL.txt"
 
           if ($env:GITHUB_REF -match '^refs/tags/v') {
